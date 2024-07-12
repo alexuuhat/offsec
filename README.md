@@ -1,4 +1,4 @@
-# OffSec Material
+# OffSec Materials
 
 ## Overview
 This repository is dedicated to storing materials related to Offensive Security Certified Professional (OSCP) preparation and related topics.
