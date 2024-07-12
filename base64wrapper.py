@@ -21,6 +21,13 @@ if __name__ == "__main__":
         else:
             break
     
+    # Validate if the input is a valid Base64 string
+    try:
+        base64.b64decode(base64_input, validate=True)
+    except (TypeError, binascii.Error):
+        print("Invalid Base64 input. Exiting.")
+        exit(1)
+    
     # Get the desired line length
     try:
         line_length = int(input("Enter the line length (default is 76): "))
@@ -35,9 +42,17 @@ if __name__ == "__main__":
     print(formatted_base64)
     
     # Decode the Base64 string and write to a file
-    decoded_data = base64.b64decode(base64_input)
-    output_filename = "decoded_output.zip"
-    with open(output_filename, "wb") as f:
-        f.write(decoded_data)
+    try:
+        decoded_data = base64.b64decode(base64_input)
+    except Exception as e:
+        print(f"Error decoding Base64: {e}")
+        exit(1)
     
-    print(f"\nDecoded data written to {output_filename}")
+    output_filename = input("\nEnter the output file name (default is 'decoded_output'): ") or "decoded_output"
+    try:
+        with open(output_filename, "wb") as f:
+            f.write(decoded_data)
+        print(f"\nDecoded data written to {output_filename}")
+    except Exception as e:
+        print(f"Error writing to file {output_filename}: {e}")
+        exit(1)
