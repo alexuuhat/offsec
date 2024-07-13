@@ -1,54 +1,77 @@
-import textwrap
 import base64
+import binascii
+import argparse
 
-def reformat_base64(encoded_string, line_length=76):
+def decode_hex_to_bytes(hex_string):
     """
-    Reformat a Base64 encoded string into lines of specified length.
-
-    :param encoded_string: The original Base64 encoded string.
-    :param line_length: The length of each line in the reformatted string.
-    :return: The reformatted Base64 string.
+    Decode a hexadecimal string to bytes.
+    :param hex_string: The hexadecimal string.
+    :return: The decoded bytes.
     """
-    return "\n".join(textwrap.wrap(encoded_string, line_length))
-
-if __name__ == "__main__":
-    print("Enter the Base64 encoded string (press Enter twice to finish):")
-    base64_input = ""
-    while True:
-        line = input()
-        if line:
-            base64_input += line
-        else:
-            break
+    # Remove any whitespace characters
+    hex_string = ''.join(hex_string.split())
     
-    # Validate if the input is a valid Base64 string
+    # Ensure the hex string has an even length
+    if len(hex_string) % 2 != 0:
+        hex_string = '0' + hex_string
+    
     try:
-        base64.b64decode(base64_input, validate=True)
-    except (TypeError, binascii.Error):
-        print("Invalid Base64 input. Exiting.")
+        return binascii.unhexlify(hex_string)
+    except binascii.Error as e:
+        print(f"Error decoding hex string: {e}")
         exit(1)
-    
-    # Get the desired line length
-    try:
-        line_length = int(input("Enter the line length (default is 76): "))
-    except ValueError:
-        line_length = 76
 
-    # Reformat the Base64 string
-    formatted_base64 = reformat_base64(base64_input, line_length)
+def remove_carriage_returns_and_newlines(input_bytes):
+    """
+    Remove carriage returns and newlines from the input bytes.
+    :param input_bytes: The input bytes.
+    :return: The bytes without carriage returns and newlines.
+    """
+    return input_bytes.replace(b'\r', b'').replace(b'\n', b'')
 
-    # Print the reformatted Base64 string
-    print("\nReformatted Base64 string:\n")
-    print(formatted_base64)
-    
-    # Decode the Base64 string and write to a file
+def decode_base64(encoded_bytes):
+    """
+    Decode Base64 encoded bytes.
+    :param encoded_bytes: The Base64 encoded bytes.
+    :return: The decoded bytes.
+    """
     try:
-        decoded_data = base64.b64decode(base64_input)
-    except Exception as e:
+        return base64.b64decode(encoded_bytes)
+    except (TypeError, binascii.Error) as e:
         print(f"Error decoding Base64: {e}")
         exit(1)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process and decode a Base64 encoded file.")
+    parser.add_argument('input_filename', help="The input filename containing the Base64 encoded data.")
+    parser.add_argument('-o', '--output_filename', default='decoded_output', help="The output filename for the decoded data (default: 'decoded_output').")
     
-    output_filename = input("\nEnter the output file name (default is 'decoded_output'): ") or "decoded_output"
+    args = parser.parse_args()
+    
+    input_filename = args.input_filename
+    output_filename = args.output_filename
+    
+    try:
+        with open(input_filename, "r") as f:
+            hex_string = f.read()
+    except Exception as e:
+        print(f"Error reading file {input_filename}: {e}")
+        exit(1)
+    
+    # Decode the hexadecimal string to bytes
+    decoded_bytes = decode_hex_to_bytes(hex_string)
+    
+    # Remove carriage returns and newlines
+    clean_bytes = remove_carriage_returns_and_newlines(decoded_bytes)
+    
+    # Decode the Base64 string to bytes
+    decoded_data = decode_base64(clean_bytes)
+    
+    # Print the decoded data to the terminal
+    print("\nDecoded data:\n")
+    print(decoded_data.decode('utf-8', errors='ignore'))
+    
+    # Write the decoded data to a file
     try:
         with open(output_filename, "wb") as f:
             f.write(decoded_data)
